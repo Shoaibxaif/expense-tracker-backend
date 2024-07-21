@@ -73,4 +73,73 @@ router.delete("/transactions/:id", async (req, res) => {
   }
 });
 
+
+// Get expenses data
+router.get("/expenses", async (req, res) => {
+    try {
+      // Aggregate expenses by category
+      const expenses = await Transaction.aggregate([
+        { $match: { category: { $in: ["Food", "Housing", "Utilities", "Other"] } } }, // filter to only include expense categories
+        {
+          $group: {
+            _id: "$category",
+            total: { $sum: "$amount" },
+          },
+        },
+        {
+          $project: {
+            _id: 0,
+            category: "$_id",
+            amount: "$total",
+          },
+        },
+      ]);
+  
+      // Format data for frontend
+      const formattedData = {
+        labels: expenses.map(exp => exp.category),
+        values: expenses.map(exp => exp.amount),
+      };
+  
+      res.status(200).json(formattedData);
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+  
+
+  // Get income data
+router.get("/income", async (req, res) => {
+    try {
+      // Aggregate income by category
+      const income = await Transaction.aggregate([
+        { $match: { category: { $in: ["Salary", "Freelance", "Investment", "Other"] } } }, // filter to only include income categories
+        {
+          $group: {
+            _id: "$category",
+            total: { $sum: "$amount" },
+          },
+        },
+        {
+          $project: {
+            _id: 0,
+            category: "$_id",
+            amount: "$total",
+          },
+        },
+      ]);
+  
+      // Format data for frontend
+      const formattedData = {
+        labels: income.map(inc => inc.category),
+        values: income.map(inc => inc.amount),
+      };
+  
+      res.status(200).json(formattedData);
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+  
+
 module.exports = router;
